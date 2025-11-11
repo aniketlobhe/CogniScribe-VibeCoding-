@@ -54,16 +54,6 @@ Three distinct AI personalities that match developmental stages:
 
 ---
 
-## Screenshots
-
-> Add screenshots here showing:
-> - Start screen with 3 age groups
-> - Chat interface with messages
-> - Speech recognition in action
-> - TTS controls and swipe gestures
-
----
-
 ## Technical Stack
 
 ### Core Technologies
