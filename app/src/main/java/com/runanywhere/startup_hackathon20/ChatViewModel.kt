@@ -384,8 +384,12 @@ class ChatViewModel(private val context: Context) : ViewModel(), TextToSpeech.On
     fun sendMessage(text: String) {
         if (_currentModelId.value == null) {
             _statusMessage.value = "Please load a model first"
+            Log.e("ViewModel", "sendMessage failed: No model loaded. currentModelId is null")
             return
         }
+
+        Log.d("ViewModel", "sendMessage called with text: ${text.take(50)}...")
+        Log.d("ViewModel", "Current model ID: ${_currentModelId.value}")
 
         // Clear speech recognition text if this was sent via speech
         _speechRecognitionText.value = ""
@@ -558,16 +562,35 @@ class ChatViewModel(private val context: Context) : ViewModel(), TextToSpeech.On
         // Store greeting to speak once TTS is ready
         pendingGreeting = greeting
 
+        Log.d("ViewModel", "initializeChat called for age group: $ageGroup")
+        Log.d("ViewModel", "AI Name: $aiName")
+        Log.d("ViewModel", "Available models count: ${_availableModels.value.size}")
+
         // Auto-load the first available downloaded model
         viewModelScope.launch(Dispatchers.IO) {
+            // Wait a bit for models list to be populated if needed
+            kotlinx.coroutines.delay(500)
+
             val downloadedModel = _availableModels.value.firstOrNull {
                 it.isDownloaded && (it.category.name == "LLM" || it.category.name == "LANGUAGE")
             }
+
+            Log.d("ViewModel", "Looking for downloaded models...")
+            _availableModels.value.forEach { model ->
+                Log.d(
+                    "ViewModel",
+                    "Model: ${model.name}, Category: ${model.category.name}, Downloaded: ${model.isDownloaded}"
+                )
+            }
+
             if (downloadedModel != null) {
-                Log.d("ViewModel", "Auto-loading model: ${downloadedModel.name}")
+                Log.d(
+                    "ViewModel",
+                    "Auto-loading model: ${downloadedModel.name} (ID: ${downloadedModel.id})"
+                )
                 loadModel(downloadedModel.id)
             } else {
-                Log.w("ViewModel", "No downloaded model available for auto-load")
+                Log.w("ViewModel", "No downloaded LLM model available for auto-load")
                 withContext(Dispatchers.Main) {
                     _statusMessage.value = "Please download a model from the Models menu"
                 }

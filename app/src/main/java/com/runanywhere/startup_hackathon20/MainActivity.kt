@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,6 +59,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Set status bar color and icon colors
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         setContent {
             Startup_hackathon20Theme {
                 val navController = rememberNavController()
@@ -107,73 +113,58 @@ fun ChatScreen(viewModel: ChatViewModel, ageGroup: String) {
     var showMenu by remember { mutableStateOf(false) }
     val isSpeechMode by viewModel.isSpeechMode.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = when (ageGroup) {
-                                "Ages 4-7" -> "📚 The Storyteller"
-                                "Ages 8-12" -> "🔍 The Explorer"
-                                "Ages 13-16+" -> "🎓 The Problem Solver"
-                                else -> "CogniScribe"
-                            },
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        if (ageGroup.isNotEmpty()) {
+    // Set status bar to have a background color
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Status bar background
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .background(MaterialTheme.colorScheme.primaryContainer)
+        )
+
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding(),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
                             Text(
-                                text = "for $ageGroup",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = when (ageGroup) {
+                                    "Ages 4-7" -> "📚 The Storyteller"
+                                    "Ages 8-12" -> "🔍 The Explorer"
+                                    "Ages 13-16+" -> "🎓 The Problem Solver"
+                                    else -> "CogniScribe"
+                                },
+                                style = MaterialTheme.typography.titleLarge
                             )
-                        }
-                    }
-                },
-                actions = {
-                    // 3-dot menu
-                    Box {
-                        IconButton(onClick = { showMenu = !showMenu }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More options"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            // Show current model info or download progress
-                            if (downloadProgress != null) {
-                                DropdownMenuItem(
-                                    text = {
-                                        Column {
-                                            Text(
-                                                "Downloading Model...",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            LinearProgressIndicator(
-                                                progress = { downloadProgress ?: 0f },
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(4.dp),
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            Text(
-                                                "${((downloadProgress ?: 0f) * 100).toInt()}%",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    },
-                                    onClick = { }
+                            if (ageGroup.isNotEmpty()) {
+                                Text(
+                                    text = "for $ageGroup",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Divider()
-                            } else if (currentModelId != null) {
-                                val currentModel = availableModels.firstOrNull { it.id == currentModelId }
+                            }
+                        }
+                    },
+                    actions = {
+                        // 3-dot menu
+                        Box {
+                            IconButton(onClick = { showMenu = !showMenu }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More options"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                // Show current model info or download progress
+                                val currentModel =
+                                    availableModels.firstOrNull { it.id == currentModelId }
                                 if (currentModel != null) {
                                     DropdownMenuItem(
                                         text = {
@@ -194,397 +185,404 @@ fun ChatScreen(viewModel: ChatViewModel, ageGroup: String) {
                                     )
                                     Divider()
                                 }
-                            }
-                            // Speech/Text Mode Toggle
-                            DropdownMenuItem(
-                                text = {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isSpeechMode) Icons.Default.Mic else Icons.Default.Stop,
-                                            contentDescription = null,
-                                            tint = if (isSpeechMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(if (isSpeechMode) "Speech Mode (On)" else "Text Mode")
+                                // Speech/Text Mode Toggle
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isSpeechMode) Icons.Default.Mic else Icons.Default.Stop,
+                                                contentDescription = null,
+                                                tint = if (isSpeechMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(if (isSpeechMode) "Speech Mode (On)" else "Text Mode")
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.toggleSpeechMode()
                                     }
-                                },
-                                onClick = {
-                                    viewModel.toggleSpeechMode()
-                                }
-                            )
-                            Divider()
-                            // Models Option
-                            DropdownMenuItem(
-                                text = { Text("Manage Models") },
-                                onClick = {
-                                    showMenu = false
-                                    showModelSelector = !showModelSelector
-                                }
-                            )
+                                )
+                                Divider()
+                                // Models Option
+                                DropdownMenuItem(
+                                    text = { Text("Manage Models") },
+                                    onClick = {
+                                        showMenu = false
+                                        showModelSelector = !showModelSelector
+                                    }
+                                )
+                            }
                         }
                     }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        )
-                    )
                 )
-        ) {
-            Column(
+            }
+        ) { padding ->
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-            ) {
-                // Model selector (collapsible)
-                AnimatedVisibility(
-                    visible = showModelSelector,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    ModelSelector(
-                        models = availableModels,
-                        currentModelId = currentModelId,
-                        onDownload = { modelId -> viewModel.downloadModel(modelId) },
-                        onLoad = { modelId -> viewModel.loadModel(modelId) },
-                        onRefresh = { viewModel.refreshModels() }
-                    )
-                }
-
-                // Messages List
-                val listState = rememberLazyListState()
-
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    reverseLayout = false
-                ) {
-                    items(messages) { message ->
-                        MessageBubble(
-                            message,
-                            viewModel,
-                            aiName = aiName,
-                            onReply = { message -> viewModel.replyToMessage(message) }
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                MaterialTheme.colorScheme.surface,
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            )
                         )
-                    }
-                }
-
-                // Auto-scroll to bottom when new messages arrive
-                LaunchedEffect(messages.size) {
-                    if (messages.isNotEmpty()) {
-                        listState.animateScrollToItem(messages.lastIndex)
-                    }
-                }
-
-                // 1. Get context and isListening state
-                val context = LocalContext.current
-                val isListening by viewModel.isListening.collectAsState()
-                val replyingTo by viewModel.replyingToMessage.collectAsState()
-
-                // 2. Create a new permission launcher.
-                val requestPermissionLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission()
-                ) { isGranted: Boolean ->
-                    if (isGranted) {
-                        // Permission is granted, NOW start listening
-                        Log.d("STT", "Permission granted! Starting listening.")
-                        viewModel.startListening()
-                    } else {
-                        // Permission was denied
-                        Toast.makeText(
-                            context,
-                            "Permission denied. STT will not work.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-
-                // 3. WhatsApp-style input section
+                    )
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
                 ) {
-                    // Speech recognition preview (shown when listening or recognized text is available)
-                    val speechText by viewModel.speechRecognitionText.collectAsState()
+                    // Model selector (collapsible)
                     AnimatedVisibility(
-                        visible = speechText.isNotEmpty(),
+                        visible = showModelSelector,
                         enter = expandVertically() + fadeIn(),
                         exit = shrinkVertically() + fadeOut()
                     ) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
-                            tonalElevation = 2.dp
+                        ModelSelector(
+                            models = availableModels,
+                            currentModelId = currentModelId,
+                            onDownload = { modelId -> viewModel.downloadModel(modelId) },
+                            onLoad = { modelId -> viewModel.loadModel(modelId) },
+                            onRefresh = { viewModel.refreshModels() }
+                        )
+                    }
+
+                    // Messages List
+                    val listState = rememberLazyListState()
+
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        reverseLayout = false
+                    ) {
+                        items(messages) { message ->
+                            MessageBubble(
+                                message,
+                                viewModel,
+                                aiName = aiName,
+                                onReply = { message -> viewModel.replyToMessage(message) }
+                            )
+                        }
+                    }
+
+                    // Auto-scroll to bottom when new messages arrive
+                    LaunchedEffect(messages.size) {
+                        if (messages.isNotEmpty()) {
+                            listState.animateScrollToItem(messages.lastIndex)
+                        }
+                    }
+
+                    // 1. Get context and isListening state
+                    val context = LocalContext.current
+                    val isListening by viewModel.isListening.collectAsState()
+                    val replyingTo by viewModel.replyingToMessage.collectAsState()
+
+                    // 2. Create a new permission launcher.
+                    val requestPermissionLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.RequestPermission()
+                    ) { isGranted: Boolean ->
+                        if (isGranted) {
+                            // Permission is granted, NOW start listening
+                            Log.d("STT", "Permission granted! Starting listening.")
+                            viewModel.startListening()
+                        } else {
+                            // Permission was denied
+                            Toast.makeText(
+                                context,
+                                "Permission denied. STT will not work.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+
+                    // 3. WhatsApp-style input section
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Speech recognition preview (shown when listening or recognized text is available)
+                        val speechText by viewModel.speechRecognitionText.collectAsState()
+                        AnimatedVisibility(
+                            visible = speechText.isNotEmpty(),
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
+                                tonalElevation = 2.dp
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Mic,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Mic,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
 
-                                Text(
-                                    text = if (isListening) "Listening: $speechText" else "You said: $speechText",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    modifier = Modifier.weight(1f)
-                                )
+                                    Text(
+                                        text = if (isListening) "Listening: $speechText" else "You said: $speechText",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier.weight(1f)
+                                    )
 
-                                // Send button for recognized text
-                                if (!isListening && speechText.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = {
-                                            viewModel.sendMessage(speechText)
-                                            // Clear speech recognition text after sending
-                                        },
-                                        modifier = Modifier.size(32.dp)
+                                    // Send button for recognized text
+                                    if (!isListening && speechText.isNotEmpty()) {
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.sendMessage(speechText)
+                                                // Clear speech recognition text after sending
+                                            },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Send,
+                                                contentDescription = "Send",
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+
+                                        // Close button
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.clearSpeechRecognitionText()
+                                            },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Stop,
+                                                contentDescription = "Clear",
+                                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Reply preview (shown when replying to a message)
+                        AnimatedVisibility(
+                            visible = replyingTo != null,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                tonalElevation = 2.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Reply indicator line
+                                    Box(
+                                        modifier = Modifier
+                                            .width(4.dp)
+                                            .height(40.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.primary,
+                                                shape = RoundedCornerShape(2.dp)
+                                            )
+                                    )
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    // Reply content
+                                    Column(
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Send,
-                                            contentDescription = "Send",
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(20.dp)
+                                        Text(
+                                            text = if (replyingTo?.isUser == true) "You" else aiName,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = replyingTo?.text ?: "",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
 
                                     // Close button
                                     IconButton(
                                         onClick = {
-                                            viewModel.clearSpeechRecognitionText()
+                                            viewModel.cancelReply()
                                         },
                                         modifier = Modifier.size(32.dp)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Stop,
-                                            contentDescription = "Clear",
-                                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                            modifier = Modifier.size(18.dp)
+                                            contentDescription = "Cancel reply",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(20.dp)
                                         )
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // Reply preview (shown when replying to a message)
-                    AnimatedVisibility(
-                        visible = replyingTo != null,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
+                        // Input row: TextField + dynamic Send/Mic button
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            tonalElevation = 2.dp
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            tonalElevation = 8.dp
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Reply indicator line
-                                Box(
+                                OutlinedTextField(
+                                    value = inputText,
+                                    onValueChange = { inputText = it },
                                     modifier = Modifier
-                                        .width(4.dp)
-                                        .height(40.dp)
-                                        .background(
-                                            MaterialTheme.colorScheme.primary,
-                                            shape = RoundedCornerShape(2.dp)
+                                        .weight(1f)
+                                        .padding(end = 8.dp),
+                                    placeholder = { Text("Type a message…") },
+                                    singleLine = true,
+                                    enabled = !isListening,
+                                    shape = RoundedCornerShape(24.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(
+                                            alpha = 0.5f
                                         )
-                                )
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                // Reply content
-                                Column(
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = if (replyingTo?.isUser == true) "You" else aiName,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = replyingTo?.text ?: "",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-
-                                // Close button
-                                IconButton(
-                                    onClick = { viewModel.cancelReply() },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Stop,
-                                        contentDescription = "Cancel reply",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Input row: TextField + dynamic Send/Mic button
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        tonalElevation = 8.dp
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = inputText,
-                                onValueChange = { inputText = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp),
-                                placeholder = { Text("Type a message…") },
-                                singleLine = true,
-                                enabled = !isListening,
-                                shape = RoundedCornerShape(24.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(
-                                        alpha = 0.5f
                                     )
                                 )
-                            )
-                            if (inputText.isNotBlank()) {
-                                // Show Send button when typing with subtle animation
-                                val scale by animateFloatAsState(
-                                    targetValue = 1f,
-                                    animationSpec = tween(
-                                        durationMillis = 200,
-                                        easing = FastOutSlowInEasing
-                                    ),
-                                    label = "sendScale"
-                                )
-
-                                IconButton(
-                                    onClick = {
-                                        val text = inputText.trim()
-                                        if (text.isNotEmpty() && currentModelId != null) {
-                                            viewModel.sendMessage(text)
-                                            inputText = ""
-                                        }
-                                    },
-                                    enabled = !isLoading && currentModelId != null,
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .scale(scale)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (currentModelId != null)
-                                                MaterialTheme.colorScheme.primary
-                                            else
-                                                MaterialTheme.colorScheme.surfaceVariant
-                                        )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Send,
-                                        contentDescription = "Send",
-                                        tint = if (currentModelId != null)
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp)
+                                if (inputText.isNotBlank()) {
+                                    // Show Send button when typing with subtle animation
+                                    val scale by animateFloatAsState(
+                                        targetValue = 1f,
+                                        animationSpec = tween(
+                                            durationMillis = 200,
+                                            easing = FastOutSlowInEasing
+                                        ),
+                                        label = "sendScale"
                                     )
-                                }
-                            } else {
-                                // Show Mic/Stop button with pulsing animation when listening
-                                val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                                val pulseScale by infiniteTransition.animateFloat(
-                                    initialValue = 1f,
-                                    targetValue = if (isListening) 1.05f else 1f,
-                                    animationSpec = infiniteRepeatable(
-                                        animation = tween(1200, easing = FastOutSlowInEasing),
-                                        repeatMode = RepeatMode.Reverse
-                                    ),
-                                    label = "pulseScale"
-                                )
 
-                                IconButton(
-                                    onClick = {
-                                        Log.d(
-                                            "STT",
-                                            "Mic button clicked. isListening = $isListening"
-                                        )
-                                        if (isListening) {
-                                            viewModel.stopListening()
-                                        } else {
-                                            // Check for permission FIRST.
-                                            when (ContextCompat.checkSelfPermission(
-                                                context,
-                                                android.Manifest.permission.RECORD_AUDIO
-                                            )) {
-                                                PackageManager.PERMISSION_GRANTED -> {
-                                                    Log.d(
-                                                        "STT",
-                                                        "Permission was already granted. Starting listening."
-                                                    )
-                                                    viewModel.startListening()
-                                                }
-
-                                                else -> {
-                                                    Log.d(
-                                                        "STT",
-                                                        "Permission not granted. Launching request."
-                                                    )
-                                                    requestPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+                                    IconButton(
+                                        onClick = {
+                                            val text = inputText.trim()
+                                            if (text.isNotEmpty()) {
+                                                if (currentModelId != null) {
+                                                    viewModel.sendMessage(text)
+                                                    inputText = ""
+                                                } else {
+                                                    Toast
+                                                        .makeText(
+                                                            context,
+                                                            "Please load a model before sending a message.",
+                                                            Toast.LENGTH_SHORT
+                                                        )
+                                                        .show()
                                                 }
                                             }
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .scale(pulseScale)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isListening)
-                                                MaterialTheme.colorScheme.errorContainer
-                                            else
-                                                MaterialTheme.colorScheme.primaryContainer
+                                        },
+                                        enabled = !isLoading,
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .scale(scale)
+                                            .clip(CircleShape)
+                                            .background(
+                                                MaterialTheme.colorScheme.primary
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Send,
+                                            contentDescription = "Send",
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                            modifier = Modifier.size(24.dp)
                                         )
-                                ) {
-                                    Icon(
-                                        imageVector = if (isListening) Icons.Default.Stop else Icons.Default.Mic,
-                                        contentDescription = if (isListening) "Stop listening" else "Start listening",
-                                        tint = if (isListening)
-                                            MaterialTheme.colorScheme.error
-                                        else
-                                            MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(28.dp)
+                                    }
+                                } else {
+                                    // Show Mic/Stop button with pulsing animation when listening
+                                    val infiniteTransition =
+                                        rememberInfiniteTransition(label = "pulse")
+                                    val pulseScale by infiniteTransition.animateFloat(
+                                        initialValue = 1f,
+                                        targetValue = if (isListening) 1.05f else 1f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(1200, easing = FastOutSlowInEasing),
+                                            repeatMode = RepeatMode.Reverse
+                                        ),
+                                        label = "pulseScale"
                                     )
+
+                                    IconButton(
+                                        onClick = {
+                                            Log.d(
+                                                "STT",
+                                                "Mic button clicked. isListening = $isListening"
+                                            )
+                                            if (isListening) {
+                                                viewModel.stopListening()
+                                            } else {
+                                                // Check for permission FIRST.
+                                                when (ContextCompat.checkSelfPermission(
+                                                    context,
+                                                    android.Manifest.permission.RECORD_AUDIO
+                                                )) {
+                                                    PackageManager.PERMISSION_GRANTED -> {
+                                                        Log.d(
+                                                            "STT",
+                                                            "Permission was already granted. Starting listening."
+                                                        )
+                                                        viewModel.startListening()
+                                                    }
+
+                                                    else -> {
+                                                        Log.d(
+                                                            "STT",
+                                                            "Permission not granted. Launching request."
+                                                        )
+                                                        requestPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .scale(pulseScale)
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (isListening)
+                                                    MaterialTheme.colorScheme.errorContainer
+                                                else
+                                                    MaterialTheme.colorScheme.primaryContainer
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isListening) Icons.Default.Stop else Icons.Default.Mic,
+                                            contentDescription = if (isListening) "Stop listening" else "Start listening",
+                                            tint = if (isListening)
+                                                MaterialTheme.colorScheme.error
+                                            else
+                                                MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
